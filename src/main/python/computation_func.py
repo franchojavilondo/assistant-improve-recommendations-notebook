@@ -62,7 +62,7 @@ def get_effective_df(df_tbot_raw, ineffective_intents, df_escalate_nodes, filter
 
     # If nodes visited contains any of the ineffective node ids, get the conversation id
     if filter_non_intent_node:
-        df_tbot_raw['last_node'] = df_tbot_raw['response.output.nodes_visited_s'].str[-1].apply(
+        df_tbot_raw['last_node'] = df_tbot_raw['response.output.nodes_visited'].str[-1].apply(
             lambda x: x if x else [''])
         df_tbot_raw['last_node_value'] = df_tbot_raw['last_node'].apply(
             lambda x: workspace_nodes.loc[workspace_nodes['dialog_node'] == x]['conditions'].values)
@@ -70,7 +70,7 @@ def get_effective_df(df_tbot_raw, ineffective_intents, df_escalate_nodes, filter
         df_tbot_raw['contain_intent'] = df_tbot_raw['last_node_value'].apply(
             lambda x: bool(re.match('#[a-zA-Z_0-9]+', str(x))))
         conversation_id = [conversation for conversation in df_tbot_raw.loc[
-            df_tbot_raw['response.output.nodes_visited_s'].apply(
+            df_tbot_raw['response.output.nodes_visited'].apply(
                 lambda x: bool(intersection(x, ineffective_nodes)))].loc[df_tbot_raw['contain_intent']][
             'response.context.conversation_id']]
 
@@ -81,7 +81,7 @@ def get_effective_df(df_tbot_raw, ineffective_intents, df_escalate_nodes, filter
 
     else:
         conversation_id = [conversation for conversation in df_tbot_raw.loc[
-            df_tbot_raw['response.output.nodes_visited_s'].apply(
+            df_tbot_raw['response.output.nodes_visited'].apply(
                 lambda x: bool(intersection(x, ineffective_nodes)))].loc[df_tbot_raw['contain_intent']][
             'response.context.conversation_id']]
 
@@ -126,7 +126,7 @@ def get_coverage_df(df_tbot_raw, df_coverage_nodes, conf_threshold):
     for node in df_coverage_valid['Node ID'].tolist():
         cause = "'{}' node".format(df_coverage_valid.loc[df_coverage_valid['Node ID'] == node, 'Condition'].values[0])
         df_tbot_raw.loc[
-            (df_tbot_raw['response.output.nodes_visited_s'].apply(lambda x: bool(intersection(x, node.split())))), [
+            (df_tbot_raw['response.output.nodes_visited'].apply(lambda x: bool(intersection(x, node.split())))), [
                 'Covered', 'Not Covered cause']] = [False, cause]
 
     # (2) Mark all messages  that did not meet confidence threshold set as 'Not covered' and update the 'Not Covered
@@ -273,7 +273,7 @@ def format_data(df):
         df6.reindex(columns=[*df6.columns.tolist(), *new_cols_list], fill_value='')
 
     # Rename columns
-    df6.rename(columns={'response_nodes_visited': 'response.output.nodes_visited_s',
+    df6.rename(columns={'response_nodes_visited': 'response.output.nodes_visited',
                         'response_context_conversation_id': 'response.context.conversation_id',
                         'response_timestamp': 'response.timestamp'}, inplace=True)
     # Change format of numeric and date columns
